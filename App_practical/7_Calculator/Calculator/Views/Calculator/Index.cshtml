@@ -1,0 +1,214 @@
+﻿@{
+    ViewData["Title"] = "Калькулятор";
+}
+
+<style>
+    body {
+        margin: 0;
+        background: linear-gradient(135deg, #eef2ff, #f8fafc);
+        font-family: Arial, sans-serif;
+    }
+
+    .calculator-page {
+        min-height: 80vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 40px 20px;
+    }
+
+    .calculator-card {
+        width: 420px;
+        background: white;
+        border-radius: 24px;
+        padding: 35px;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+    }
+
+    .calculator-title {
+        text-align: center;
+        margin-bottom: 8px;
+        font-size: 32px;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .calculator-subtitle {
+        text-align: center;
+        color: #64748b;
+        margin-bottom: 30px;
+    }
+
+    .input-group {
+        margin-bottom: 20px;
+    }
+
+    .input-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #334155;
+    }
+
+    .number-input,
+    .operation-select {
+        width: 100%;
+        height: 52px;
+        box-sizing: border-box;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 0 15px;
+        font-size: 18px;
+        outline: none;
+        transition: 0.2s;
+        background: #f8fafc;
+        color: #1e293b;
+    }
+
+        .number-input:focus,
+        .operation-select:focus {
+            border-color: #6366f1;
+            background: white;
+        }
+
+        .number-input::placeholder {
+            color: #94a3b8;
+        }
+
+    .operation-select {
+        cursor: pointer;
+        font-size: 17px;
+        font-weight: 500;
+        appearance: auto;
+    }
+
+    .calculate-button {
+        width: 100%;
+        height: 55px;
+        border: none;
+        border-radius: 12px;
+        background: #6366f1;
+        color: white;
+        font-size: 18px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+        margin-top: 5px;
+    }
+
+        .calculate-button:hover {
+            background: #4f46e5;
+            transform: translateY(-1px);
+        }
+
+        .calculate-button:active {
+            transform: translateY(0);
+        }
+
+    .result {
+        margin-top: 25px;
+        padding: 18px;
+        border-radius: 12px;
+        background: #eef2ff;
+        text-align: center;
+    }
+
+    .result-title {
+        color: #64748b;
+        font-size: 14px;
+        margin-bottom: 5px;
+    }
+
+    .result-value {
+        color: #312e81;
+        font-size: 28px;
+        font-weight: 700;
+    }
+</style>
+
+<div class="calculator-page">
+
+    <div class="calculator-card">
+
+        <div class="calculator-title">
+            Калькулятор
+        </div>
+
+        <div class="calculator-subtitle">
+            Простой онлайн-калькулятор
+        </div>
+
+        <form method="post"
+              asp-controller="Calculator"
+              asp-action="Calculate">
+
+            @Html.AntiForgeryToken()
+
+            <div class="input-group">
+                <label class="input-label">
+                    Первое число
+                </label>
+
+                <input class="number-input"
+                       type="number"
+                       step="any"
+                       name="num1"
+                       placeholder="Введите число"
+                       required />
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">
+                    Операция
+                </label>
+
+                <select class="operation-select"
+                        name="operation"
+                        required>
+
+                    <option value="Add">+ Сложение</option>
+                    <option value="Subtract">− Вычитание</option>
+                    <option value="Multiply">× Умножение</option>
+                    <option value="Divide">÷ Деление</option>
+
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">
+                    Второе число
+                </label>
+
+                <input class="number-input"
+                       type="number"
+                       step="any"
+                       name="num2"
+                       placeholder="Введите число"
+                       required />
+            </div>
+
+            <button class="calculate-button"
+                    type="submit">
+                Рассчитать
+            </button>
+
+        </form>
+
+        @if (ViewBag.Result != null)
+        {
+            <div class="result">
+
+                <div class="result-title">
+                    Результат вычисления
+                </div>
+
+                <div class="result-value">
+                    @ViewBag.Result
+                </div>
+
+            </div>
+        }
+
+    </div>
+
+</div>
