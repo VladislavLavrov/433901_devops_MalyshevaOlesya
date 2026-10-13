@@ -207,6 +207,35 @@
                 </div>
 
             </div>
+            @if (ViewBag.History != null)
+            {
+                <div style="max-width: 900px; margin: 30px auto; padding: 20px;">
+                    <h2>История вычислений</h2>
+
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Первое число</th>
+                                <th>Операция</th>
+                                <th>Второе число</th>
+                                <th>Результат</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in ViewBag.History)
+                            {
+                                <tr>
+                                    <td>@item.Operand_1</td>
+                                    <td>@item.Type_operation</td>
+                                    <td>@item.Operand_2</td>
+                                    <td>@item.Result</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
         }
 
     </div>

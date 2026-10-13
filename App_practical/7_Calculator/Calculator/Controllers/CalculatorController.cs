@@ -1,6 +1,5 @@
 ﻿using Calculator.Data;
 using Calculator.Models;
-using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Calculator.Controllers
@@ -19,6 +18,11 @@ namespace Calculator.Controllers
         [HttpGet]
         public IActionResult Index()
         {
+            ViewBag.History = _context.DataInputVariants
+                .OrderByDescending(x => x.ID_DataInputVariant)
+                .Take(10)
+                .ToList();
+
             return View();
         }
 
@@ -39,6 +43,11 @@ namespace Calculator.Controllers
                     result = num1 * num2;
                     break;
                 case Operation.Divide:
+                    if (num2 == 0)
+                    {
+                        ModelState.AddModelError("", "На ноль делить нельзя.");
+                        return View("Index");
+                    }
                     result = num1 / num2;
                     break;
             }
@@ -50,8 +59,8 @@ namespace Calculator.Controllers
             dataInputVariant.Type_operation = operation.ToString();
             dataInputVariant.Result = result.ToString();
 
-            //_context.DataInputVariants.Add(dataInputVariant);
-            //_context.SaveChanges();
+            _context.DataInputVariants.Add(dataInputVariant);
+            _context.SaveChanges();
 
             return View("Index");
         }
