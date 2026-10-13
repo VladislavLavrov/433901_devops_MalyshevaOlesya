@@ -1,6 +1,7 @@
-﻿using Calculator.Data;
-using Calculator.Models;
+﻿
+using Calculator.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Calculator.Controllers
 {
@@ -8,21 +9,26 @@ namespace Calculator.Controllers
 
     public class CalculatorController : Controller
     {
-        private CalculatorContext _context;
+        private readonly CalculatorContext _context;
 
         public CalculatorController(CalculatorContext context)
         {
             _context = context;
         }
 
+        private void LoadHistory()
+        {
+            ViewBag.History = _context.DataInputVariants
+                .AsNoTracking()
+                .OrderByDescending(x => x.ID_DataInputVariant)
+                .Take(20)
+                .ToList();
+        }
+
         [HttpGet]
         public IActionResult Index()
         {
-            ViewBag.History = _context.DataInputVariants
-                .OrderByDescending(x => x.ID_DataInputVariant)
-                .Take(10)
-                .ToList();
-
+            LoadHistory();
             return View();
         }
 
@@ -30,37 +36,35 @@ namespace Calculator.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Calculate(double num1, double num2, Operation operation)
         {
-            double result = 0;
-            switch (operation)
+            if (operation == Operation.Divide && num2 == 0)
             {
-                case Operation.Add:
-                    result = num1 + num2;
-                    break;
-                case Operation.Subtract:
-                    result = num1 - num2;
-                    break;
-                case Operation.Multiply:
-                    result = num1 * num2;
-                    break;
-                case Operation.Divide:
-                    if (num2 == 0)
-                    {
-                        ModelState.AddModelError("", "На ноль делить нельзя.");
-                        return View("Index");
-                    }
-                    result = num1 / num2;
-                    break;
+                ModelState.AddModelError("", "На ноль делить нельзя.");
+                LoadHistory();
+                return View("Index");
             }
-            ViewBag.Result = result;
 
-            DataInputVariant dataInputVariant = new DataInputVariant();
-            dataInputVariant.Operand_1 = num1.ToString();
-            dataInputVariant.Operand_2 = num2.ToString();
-            dataInputVariant.Type_operation = operation.ToString();
-            dataInputVariant.Result = result.ToString();
+            double result = operation switch
+            {
+                Operation.Add => num1 + num2,
+                Operation.Subtract => num1 - num2,
+                Operation.Multiply => num1 * num2,
+                Operation.Divide => num1 / num2,
+                _ => throw new ArgumentOutOfRangeException(nameof(operation))
+            };
 
-            _context.DataInputVariants.Add(dataInputVariant);
+            _context.DataInputVariants.Add(new DataInputVariant
+            {
+                Operand_1 = num1,
+                Operand_2 = num2,
+                Type_operation = operation.ToString(),
+                Result = result,
+                CreatedAt = DateTime.Now
+            });
+
             _context.SaveChanges();
+
+            ViewBag.Result = result;
+            LoadHistory();
 
             return View("Index");
         }

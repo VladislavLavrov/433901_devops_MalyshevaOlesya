@@ -1,24 +1,29 @@
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using System.ComponentModel.DataAnnotations.Schema;
+
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Calculator.Data
 {
+    [Table("Calculations")]
     public class DataInputVariant
     {
         [Key]
+        [Column("Id")]
         public int ID_DataInputVariant { get; set; }
 
-        [Column(TypeName = "varchar(128)")]
-        public string? Operand_1 { get; set; }
+        [Column("FirstNumber")]
+        public double Operand_1 { get; set; }
 
-        [Column(TypeName = "varchar(128)")]
-        public string? Operand_2 { get; set; }
+        [Column("SecondNumber")]
+        public double Operand_2 { get; set; }
 
-        [Column(TypeName = "varchar(128)")]
-        public string? Type_operation { get; set; }
+        [Column("Operation")]
+        public string Type_operation { get; set; } = "";
 
-        [Column(TypeName = "varchar(128)")]
-        public string? Result { get; set; }
+        [Column("Result")]
+        public double Result { get; set; }
+
+        [Column("CreatedAt")]
+        public DateTime CreatedAt { get; set; }
     }
 }

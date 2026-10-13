@@ -13,16 +13,18 @@
         min-height: 80vh;
         display: flex;
         justify-content: center;
-        align-items: center;
+        align-items: flex-start;
         padding: 40px 20px;
     }
 
     .calculator-card {
         width: 420px;
+        max-width: 100%;
         background: white;
         border-radius: 24px;
         padding: 35px;
         box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+        box-sizing: border-box;
     }
 
     .calculator-title {
@@ -79,30 +81,27 @@
         cursor: pointer;
         font-size: 17px;
         font-weight: 500;
-        appearance: auto;
     }
 
-    .calculate-button {
+    .calculate-button,
+    .history-button {
         width: 100%;
-        height: 55px;
+        min-height: 52px;
         border: none;
         border-radius: 12px;
         background: #6366f1;
         color: white;
-        font-size: 18px;
+        font-size: 17px;
         font-weight: 600;
         cursor: pointer;
         transition: 0.2s;
         margin-top: 5px;
     }
 
-        .calculate-button:hover {
+        .calculate-button:hover,
+        .history-button:hover {
             background: #4f46e5;
             transform: translateY(-1px);
-        }
-
-        .calculate-button:active {
-            transform: translateY(0);
         }
 
     .result {
@@ -124,10 +123,63 @@
         font-size: 28px;
         font-weight: 700;
     }
+
+    .history-panel {
+        margin-top: 25px;
+        padding: 20px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        overflow-x: auto;
+    }
+
+        .history-panel h2 {
+            color: #1e293b;
+            font-size: 22px;
+            margin-top: 0;
+        }
+
+    .history-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+        .history-table th,
+        .history-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            white-space: nowrap;
+        }
+
+        .history-table th {
+            color: #4338ca;
+            background: #eef2ff;
+        }
+
+    .empty-history {
+        color: #64748b;
+        padding: 12px 0;
+    }
+
+    .validation-error {
+        color: #dc2626;
+        margin-top: 12px;
+    }
+
+    @@media (max-width: 500px) {
+        .calculator-card {
+            padding: 24px 18px;
+        }
+
+        .calculator-title {
+            font-size: 28px;
+        }
+    }
 </style>
 
 <div class="calculator-page">
-
     <div class="calculator-card">
 
         <div class="calculator-title">
@@ -145,11 +197,12 @@
             @Html.AntiForgeryToken()
 
             <div class="input-group">
-                <label class="input-label">
+                <label class="input-label" for="num1">
                     Первое число
                 </label>
 
                 <input class="number-input"
+                       id="num1"
                        type="number"
                        step="any"
                        name="num1"
@@ -158,28 +211,28 @@
             </div>
 
             <div class="input-group">
-                <label class="input-label">
+                <label class="input-label" for="operation">
                     Операция
                 </label>
 
                 <select class="operation-select"
+                        id="operation"
                         name="operation"
                         required>
-
                     <option value="Add">+ Сложение</option>
                     <option value="Subtract">− Вычитание</option>
                     <option value="Multiply">× Умножение</option>
                     <option value="Divide">÷ Деление</option>
-
                 </select>
             </div>
 
             <div class="input-group">
-                <label class="input-label">
+                <label class="input-label" for="num2">
                     Второе число
                 </label>
 
                 <input class="number-input"
+                       id="num2"
                        type="number"
                        step="any"
                        name="num2"
@@ -187,17 +240,14 @@
                        required />
             </div>
 
-            <button class="calculate-button"
-                    type="submit">
+            <button class="calculate-button" type="submit">
                 Рассчитать
             </button>
-
         </form>
 
         @if (ViewBag.Result != null)
         {
             <div class="result">
-
                 <div class="result-title">
                     Результат вычисления
                 </div>
@@ -205,39 +255,84 @@
                 <div class="result-value">
                     @ViewBag.Result
                 </div>
-
             </div>
+        }
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="validation-error">
+                @Html.ValidationSummary()
+            </div>
+        }
+
+        <button class="history-button"
+                type="button"
+                onclick="toggleHistory()">
+            История вычислений
+        </button>
+
+        <div id="historyPanel"
+             class="history-panel"
+             style="display: none;">
+
+            <h2>История вычислений</h2>
+
             @if (ViewBag.History != null)
             {
-                <div style="max-width: 900px; margin: 30px auto; padding: 20px;">
-                    <h2>История вычислений</h2>
+                var history = ViewBag.History;
 
-                    <table class="table">
+                if (history.Count > 0)
+                {
+                    <table class="history-table">
                         <thead>
                             <tr>
                                 <th>Первое число</th>
                                 <th>Операция</th>
                                 <th>Второе число</th>
                                 <th>Результат</th>
+                                <th>Дата</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var item in ViewBag.History)
+                            @foreach (var item in history)
                             {
                                 <tr>
                                     <td>@item.Operand_1</td>
                                     <td>@item.Type_operation</td>
                                     <td>@item.Operand_2</td>
                                     <td>@item.Result</td>
+                                    <td>@item.CreatedAt</td>
                                 </tr>
                             }
                         </tbody>
                     </table>
-                </div>
+                }
+                else
+                {
+                    <p class="empty-history">
+                        История пока пуста. Выполни первое вычисление.
+                    </p>
+                }
             }
-
-        }
+            else
+            {
+                <p class="empty-history">
+                    История пока недоступна.
+                </p>
+            }
+        </div>
 
     </div>
-
 </div>
+
+<script>
+    function toggleHistory() {
+        const panel = document.getElementById('historyPanel');
+
+        if (panel.style.display === 'none') {
+            panel.style.display = 'block';
+        } else {
+            panel.style.display = 'none';
+        }
+    }
+</script>
