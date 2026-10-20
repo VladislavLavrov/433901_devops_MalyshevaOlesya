@@ -2,6 +2,8 @@
 using Calculator.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Confluent.Kafka;
+using System.Text.Json;
 
 namespace Calculator.Controllers
 {
@@ -10,10 +12,14 @@ namespace Calculator.Controllers
     public class CalculatorController : Controller
     {
         private readonly CalculatorContext _context;
+        private readonly IConfiguration _configuration;
 
-        public CalculatorController(CalculatorContext context)
+        public CalculatorController(
+            CalculatorContext context,
+            IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         private void LoadHistory()
@@ -34,7 +40,10 @@ namespace Calculator.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Calculate(double num1, double num2, Operation operation)
+        public async Task<IActionResult> Calculate(
+            double num1,
+            double num2,
+            Operation operation)
         {
             if (operation == Operation.Divide && num2 == 0)
             {
@@ -52,16 +61,52 @@ namespace Calculator.Controllers
                 _ => throw new ArgumentOutOfRangeException(nameof(operation))
             };
 
-            _context.DataInputVariants.Add(new DataInputVariant
+            var calculation = new DataInputVariant
             {
                 Operand_1 = num1,
                 Operand_2 = num2,
                 Type_operation = operation.ToString(),
                 Result = result,
                 CreatedAt = DateTime.Now
-            });
+            };
 
-            _context.SaveChanges();
+            _context.DataInputVariants.Add(calculation);
+            await _context.SaveChangesAsync();
+
+            var message = new
+            {
+                Num1 = num1,
+                Num2 = num2,
+                Operation = operation.ToString(),
+                Result = result,
+                CreatedAt = calculation.CreatedAt
+            };
+
+            try
+            {
+                var config = new ProducerConfig
+                {
+                    BootstrapServers =
+                        _configuration["Kafka:BootstrapServers"]
+                };
+
+                using var producer = new ProducerBuilder<string, string>(
+                    config).Build();
+
+                var json = JsonSerializer.Serialize(message);
+
+                await producer.ProduceAsync(
+                    "calculator-results",
+                    new Message<string, string>
+                    {
+                        Key = Guid.NewGuid().ToString(),
+                        Value = json
+                    });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка отправки в Kafka: {ex.Message}");
+            }
 
             ViewBag.Result = result;
             LoadHistory();

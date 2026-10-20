@@ -1,22 +1,49 @@
-version: '3.7'
 
-services:     
+services:
   mariadb:
     container_name: web-mariadb
     hostname: mariadb
-    image: mariadb:10.5
+    image: mariadb:10.11
     restart: always
     environment:
       MARIADB_ROOT_PASSWORD: password
-      MARIADB_DATABASE: webdb
-      MARIADB_USER: webdb
-      MARIADB_PASSWORD: password
+      MARIADB_DATABASE: myWebCalculatorDb
     ports:
-      - "0.0.0.0:5023:3306"
-      
+      - "5023:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    restart: always
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    restart: always
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
   web:
     container_name: web-app-calculator
     hostname: app
-    build: Calculator/
+    build: ./Calculator
+    restart: always
     ports:
-      - "0.0.0.0:5015:5015"
+      - "5007:5007"
+    depends_on:
+      - mariadb
+      - kafka
+
+volumes:
+  mariadb_data:
