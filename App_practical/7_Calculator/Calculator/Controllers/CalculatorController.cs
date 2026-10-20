@@ -96,7 +96,7 @@ namespace Calculator.Controllers
                 var json = JsonSerializer.Serialize(message);
 
                 await producer.ProduceAsync(
-                    "calculator-results",
+                    "malysheva",
                     new Message<string, string>
                     {
                         Key = Guid.NewGuid().ToString(),

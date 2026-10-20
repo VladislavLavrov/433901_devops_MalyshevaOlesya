@@ -30,7 +30,7 @@ namespace Calculator.Services
 
             using var consumer = new ConsumerBuilder<string, string>(config).Build();
 
-            consumer.Subscribe("calculator-results");
+            consumer.Subscribe("malysheva");
 
             _logger.LogInformation("Kafka consumer запущен");
 
