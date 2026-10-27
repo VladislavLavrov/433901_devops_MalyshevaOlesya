@@ -3,6 +3,7 @@ using Calculator.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Confluent.Kafka;
+using System.Globalization;
 using System.Text.Json;
 
 namespace Calculator.Controllers
@@ -13,13 +14,16 @@ namespace Calculator.Controllers
     {
         private readonly CalculatorContext _context;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<CalculatorController> _logger;
 
         public CalculatorController(
             CalculatorContext context,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ILogger<CalculatorController> logger)
         {
             _context = context;
             _configuration = configuration;
+            _logger = logger;
         }
 
         private void LoadHistory()
@@ -65,9 +69,9 @@ namespace Calculator.Controllers
             {
                 Operand_1 = num1,
                 Operand_2 = num2,
-                Type_operation = operation.ToString(),
-                Result = result,
-                CreatedAt = DateTime.Now
+                Type_operation = (int)operation,
+                Result = result.ToString(
+        System.Globalization.CultureInfo.InvariantCulture)
             };
 
             _context.DataInputVariants.Add(calculation);
@@ -79,7 +83,7 @@ namespace Calculator.Controllers
                 Num2 = num2,
                 Operation = operation.ToString(),
                 Result = result,
-                CreatedAt = calculation.CreatedAt
+                Timestamp = DateTime.UtcNow
             };
 
             try
@@ -87,30 +91,38 @@ namespace Calculator.Controllers
                 var config = new ProducerConfig
                 {
                     BootstrapServers =
-                        _configuration["Kafka:BootstrapServers"]
+                        _configuration["Kafka:BootstrapServers"],
+                    MessageTimeoutMs = 5000
                 };
 
-                using var producer = new ProducerBuilder<string, string>(
-                    config).Build();
+                using var producer =
+                    new ProducerBuilder<string, string>(config).Build();
 
                 var json = JsonSerializer.Serialize(message);
+                var topic = _configuration["Kafka:Topic"] ?? "malysheva";
 
-                await producer.ProduceAsync(
-                    "malysheva",
+                var delivery = await producer.ProduceAsync(
+                    topic,
                     new Message<string, string>
                     {
                         Key = Guid.NewGuid().ToString(),
                         Value = json
                     });
+
+                _logger.LogInformation(
+                    "Kafka: сообщение отправлено в {Topic}, partition {Partition}, offset {Offset}",
+                    delivery.Topic,
+                    delivery.Partition.Value,
+                    delivery.Offset.Value);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка отправки в Kafka: {ex.Message}");
+                _logger.LogError(ex, "Не удалось отправить вычисление в Kafka");
+                ViewBag.KafkaError = "Вычисление сохранено, но отправка в Kafka не удалась.";
             }
 
             ViewBag.Result = result;
             LoadHistory();
-
             return View("Index");
         }
     }
