@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -8,9 +9,23 @@ pipeline {
             }
         }
 
+        stage('Find Calculator') {
+            steps {
+                sh 'find . -name "*.csproj" -not -path "*/obj/*" -not -path "*/bin/*"'
+            }
+        }
+
         stage('Build Calculator') {
             steps {
-                echo 'Building calculator project'
+                sh '''
+                    PROJECT=$(find . -name "*.csproj" -not -path "*/obj/*" -not -path "*/bin/*" | head -n 1)
+                    if [ -z "$PROJECT" ]; then
+                        echo "ERROR: .csproj not found"
+                        exit 1
+                    fi
+                    echo "Building $PROJECT"
+                    dotnet build "$PROJECT" --configuration Release
+                '''
             }
         }
     }
