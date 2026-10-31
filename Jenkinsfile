@@ -5,26 +5,31 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo 'Repository checkout successful'
+                checkout scm
             }
         }
 
-        stage('Find Calculator') {
-            steps {
-                sh 'find . -name "*.csproj" -not -path "*/obj/*" -not -path "*/bin/*"'
-            }
-        }
-
-        stage('Build Calculator') {
+        stage('Build Docker image') {
             steps {
                 sh '''
-                    PROJECT=$(find . -name "*.csproj" -not -path "*/obj/*" -not -path "*/bin/*" | head -n 1)
-                    if [ -z "$PROJECT" ]; then
-                        echo "ERROR: .csproj not found"
-                        exit 1
-                    fi
-                    echo "Building $PROJECT"
-                    dotnet build "$PROJECT" --configuration Release
+                    docker build \
+                      -t 7_calculator-web:latest \
+                      -f App_practical/7_Calculator/Calculator/Dockerfile \
+                      App_practical/7_Calculator/Calculator
+                '''
+            }
+        }
+
+        stage('Deploy Calculator') {
+            steps {
+                sh '''
+                    docker rm -f calculator_olesya_5007 || true
+
+                    docker run -d \
+                      --name calculator_olesya_5007 \
+                      --restart unless-stopped \
+                      -p 5007:5007 \
+                      7_calculator-web:latest
                 '''
             }
         }
