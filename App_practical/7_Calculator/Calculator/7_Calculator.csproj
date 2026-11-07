@@ -26,6 +26,8 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 
+		<PackageReference Include="Nedo.AspNet.Logging.OpenTelemetry" Version="1.1.0" />
+
 		<PackageReference Include="OpenTelemetry" Version="1.20.1" />
 
 		<PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.20.1" />
