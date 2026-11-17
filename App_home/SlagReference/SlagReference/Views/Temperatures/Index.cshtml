@@ -1,0 +1,2 @@
+@model IEnumerable<TemperatureCharacteristic>
+@{ViewData["Title"]="Температуры";}<div class="d-flex justify-content-between"><h1>Температурные характеристики</h1><a asp-action="Create" class="btn btn-primary">Добавить запись</a></div><table class="table table-striped"><tr><th>Состав</th><th>Температура °C</th><th>Описание</th><th>Источник</th><th></th></tr>@foreach(var x in Model){<tr><td>@x.SlagComposition?.Name</td><td>@x.TemperatureC</td><td>@x.Description</td><td>@x.Source</td><td><a asp-action="Delete" asp-route-id="@x.Id">Удалить</a></td></tr>}</table>
