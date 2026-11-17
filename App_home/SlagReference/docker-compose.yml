@@ -1,30 +1,36 @@
+
 services:
   db:
     image: mariadb:11.4
-    container_name: slagreference-db
+    container_name: slagreference-v2-db
     restart: unless-stopped
     environment:
       MARIADB_DATABASE: slag_reference
       MARIADB_USER: slag_user
       MARIADB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env}
+    ports:
+      - "3309:3306"
     volumes:
-      - mariadb_data:/var/lib/mysql
+      - slagreference_v2_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD","healthcheck.sh","--connect","--innodb_initialized"]
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
       timeout: 5s
       retries: 10
+
   web:
     build: ./SlagReference
-    container_name: slagreference-web
+    container_name: slagreference-v2-web
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: "Server=db;Port=3306;Database=slag_reference;User=slag_user;Password=${DB_PASSWORD};"
-    ports: ["5080:8080"]
+    ports:
+      - "5081:8080"
     depends_on:
       db:
         condition: service_healthy
+
 volumes:
-  mariadb_data:
+  slagreference_v2_data:
