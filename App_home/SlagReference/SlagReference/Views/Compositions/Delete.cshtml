@@ -1,2 +1,0 @@
-@model SlagComposition
-@{ViewData["Title"]="Удалить";}<h1>Удалить состав?</h1><p>Удалить «@Model.Name»? Связанные температурные записи также будут удалены.</p><form asp-action="Delete" method="post"><input type="hidden" asp-for="Id"><button class="btn btn-danger">Удалить</button> <a asp-action="Index" class="btn btn-secondary">Отмена</a></form>

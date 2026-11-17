@@ -1,2 +1,0 @@
-@model TemperatureCharacteristic
-@{ViewData["Title"]="Удалить температурную запись";}<h1>Удалить запись?</h1><p>@Model.SlagComposition?.Name — @Model.TemperatureC °C</p><form asp-action="Delete" method="post"><input type="hidden" asp-for="Id"><button class="btn btn-danger">Удалить</button> <a asp-action="Index" class="btn btn-secondary">Отмена</a></form>
